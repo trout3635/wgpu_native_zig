@@ -113,9 +113,6 @@ const WGPUBuildContext = struct {
 
         const wgpu_dep = b.lazyDependency(target_name, .{}) orelse return null;
 
-        const headerWriteFiles = b.addNamedWriteFiles("include");
-        _ = headerWriteFiles.addCopyDirectory(wgpu_dep.path("include/webgpu"), "include", .{});
-
         const translate_step = b.addTranslateC(.{
             // wgpu.h imports webgpu.h, so we get the contents of both files, as well as a bunch of libc garbage.
             .root_source_file = wgpu_dep.path("include/webgpu/wgpu.h"),
@@ -205,6 +202,11 @@ const WGPUBuildContext = struct {
             wgpu_c_mod.addObjectFile(libwgpu_path.?);
         }
 
+        // const headerWriteFiles = b.build_root.handle.addNamedWriteFiles("include");
+        // _ = headerWriteFiles.addCopyDirectory(wgpu_dep.path("include/webgpu"), "", .{});
+
+        copy_headers_to_cache_root(b, wgpu_dep) catch {};
+
         return WGPUBuildContext{
             .link_mode = link_mode,
             .target = target,
@@ -220,6 +222,14 @@ const WGPUBuildContext = struct {
         };
     }
 };
+
+fn copy_headers_to_cache_root(b: *std.Build, wgpu_dep: *std.Build.Dependency) !void {
+    const headerWriteFilesDir = try b.build_root.handle.openDir(".", .{});
+    const headerDir = try wgpu_dep.path("include/wgpu").getPath3(b, null).openDir(".", .{});
+    _ = try headerWriteFilesDir.makeDir("include");
+    _ = try headerDir.copyFile("wgpu.h", headerWriteFilesDir, "wgpu.h", .{});
+    _ = try headerDir.copyFile("webgpu.h", headerWriteFilesDir, "webgpu.h", .{});
+}
 
 fn dynamic_link(context: *const WGPUBuildContext, c: *std.Build.Step.Compile, cmd: *std.Build.Step.Run) void {
     if (!context.is_windows) {

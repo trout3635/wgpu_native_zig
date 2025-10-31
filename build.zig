@@ -203,8 +203,9 @@ const WGPUBuildContext = struct {
         }
 
         const headerWriteFiles = b.addNamedWriteFiles("include");
-        _ = headerWriteFiles.addCopyFile(wgpu_dep.path("include/webgpu/wgpu.h"), "wgpu.h");
-        _ = headerWriteFiles.addCopyFile(wgpu_dep.path("include/webgpu/webgpu.h"), "webgpu.h");
+        // _ = headerWriteFiles.addCopyFile(wgpu_dep.path("include/webgpu/wgpu.h"), "wgpu.h");
+        // _ = headerWriteFiles.addCopyFile(wgpu_dep.path("include/webgpu/webgpu.h"), "webgpu.h");
+        _ = headerWriteFiles.addCopyDirectory(wgpu_dep.path("include/webgpu"), "include", .{ .include_extensions = &.{".h"} });
 
         return WGPUBuildContext{
             .link_mode = link_mode,

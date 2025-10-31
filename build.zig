@@ -202,10 +202,9 @@ const WGPUBuildContext = struct {
             wgpu_c_mod.addObjectFile(libwgpu_path.?);
         }
 
-        // const headerWriteFiles = b.build_root.handle.addNamedWriteFiles("include");
-        // _ = headerWriteFiles.addCopyDirectory(wgpu_dep.path("include/webgpu"), "", .{});
-
-        copy_headers_to_cache_root(b, wgpu_dep) catch {};
+        copy_headers_to_cache_root(b, wgpu_dep) catch |err| {
+            std.debug.panic("Error exposing header files: {}", .{err});
+        };
 
         return WGPUBuildContext{
             .link_mode = link_mode,
@@ -225,10 +224,11 @@ const WGPUBuildContext = struct {
 
 fn copy_headers_to_cache_root(b: *std.Build, wgpu_dep: *std.Build.Dependency) !void {
     const headerWriteFilesDir = try b.build_root.handle.openDir(".", .{});
-    const headerDir = try wgpu_dep.path("include/wgpu").getPath3(b, null).openDir(".", .{});
-    _ = try headerWriteFilesDir.makeDir("include");
-    _ = try headerDir.copyFile("wgpu.h", headerWriteFilesDir, "wgpu.h", .{});
-    _ = try headerDir.copyFile("webgpu.h", headerWriteFilesDir, "webgpu.h", .{});
+    const headerDir = try wgpu_dep.path("include/webgpu").getPath3(b, null).openDir(".", .{});
+    headerWriteFilesDir.deleteTree("include") catch {};
+    try headerWriteFilesDir.makeDir("include");
+    try headerDir.copyFile("wgpu.h", headerWriteFilesDir, "include/wgpu.h", .{});
+    try headerDir.copyFile("webgpu.h", headerWriteFilesDir, "include/webgpu.h", .{});
 }
 
 fn dynamic_link(context: *const WGPUBuildContext, c: *std.Build.Step.Compile, cmd: *std.Build.Step.Run) void {

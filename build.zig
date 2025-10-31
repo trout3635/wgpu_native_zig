@@ -113,6 +113,9 @@ const WGPUBuildContext = struct {
 
         const wgpu_dep = b.lazyDependency(target_name, .{}) orelse return null;
 
+        const headerWriteFiles = b.addNamedWriteFiles("include");
+        _ = headerWriteFiles.addCopyDirectory(wgpu_dep.path("include/webgpu"), "include", .{});
+
         const translate_step = b.addTranslateC(.{
             // wgpu.h imports webgpu.h, so we get the contents of both files, as well as a bunch of libc garbage.
             .root_source_file = wgpu_dep.path("include/webgpu/wgpu.h"),
@@ -201,11 +204,6 @@ const WGPUBuildContext = struct {
             wgpu_mod.addObjectFile(libwgpu_path.?);
             wgpu_c_mod.addObjectFile(libwgpu_path.?);
         }
-
-        const headerWriteFiles = b.addNamedWriteFiles("include");
-        // _ = headerWriteFiles.addCopyFile(wgpu_dep.path("include/webgpu/wgpu.h"), "wgpu.h");
-        // _ = headerWriteFiles.addCopyFile(wgpu_dep.path("include/webgpu/webgpu.h"), "webgpu.h");
-        _ = headerWriteFiles.addCopyDirectory(wgpu_dep.path("include/webgpu"), "include", .{ .include_extensions = &.{".h"} });
 
         return WGPUBuildContext{
             .link_mode = link_mode,

@@ -202,6 +202,10 @@ const WGPUBuildContext = struct {
             wgpu_c_mod.addObjectFile(libwgpu_path.?);
         }
 
+        const headerWriteFiles = b.addNamedWriteFiles("include");
+        _ = headerWriteFiles.addCopyFile(wgpu_dep.path("include/webgpu/wgpu.h"), "wgpu.h");
+        _ = headerWriteFiles.addCopyFile(wgpu_dep.path("include/webgpu/webgpu.h"), "webgpu.h");
+
         return WGPUBuildContext{
             .link_mode = link_mode,
             .target = target,
